@@ -1,17 +1,52 @@
 from PySide6.QtWidgets import (
     QApplication, QWidget, QPushButton, QLabel,
-    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSplashScreen
+    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu
 )
 from PySide6.QtCore import Qt , QTimer, QSettings ,QObject, Signal, QThread 
 from PySide6.QtGui import QPixmap , QIcon
 import sys
 import wall as wl
 import category as cat
-import time
 import os
+import winreg
 import storage as sg
 from pyqttoast import Toast, ToastPreset
 from PySide6.QtNetwork import QNetworkInformation
+
+
+
+APP_NAME = "PixelverseWallpaper"
+
+FLAG_FILE = os.path.join(os.getenv("APPDATA"), APP_NAME, "first_run.txt")
+
+def is_first_run():
+    return not os.path.exists(FLAG_FILE)
+
+
+def add_to_startup():
+    exe_path = sys.executable  # 
+
+    key = winreg.OpenKey(
+        winreg.HKEY_CURRENT_USER,
+        r"Software\Microsoft\Windows\CurrentVersion\Run",
+        0,
+        winreg.KEY_SET_VALUE
+    )
+    winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, exe_path)
+    winreg.CloseKey(key)
+
+
+def mark_first_run_done():
+    os.makedirs(os.path.dirname(FLAG_FILE), exist_ok=True)
+    with open(FLAG_FILE, "w") as f:
+        f.write("done")
+
+
+
+if is_first_run():
+    add_to_startup()
+    mark_first_run_done()
+
 
 # Qt threds for api key validation
 class ApiWorker(QObject):
@@ -125,6 +160,10 @@ loader.setRange(0, 0)     # make it infinite
 loader.setAlignment(Qt.AlignCenter)
 
 
+label_A = QLabel('<a href="https://example.com">HOW TO GET PIXABAY API ? CLICK HERE...</a>')
+label_A.setOpenExternalLinks(True)  # makes link clickable
+label_A.setAlignment(Qt.AlignCenter)
+label_A.setStyleSheet("color:#0000FF; font-size:15px;")
 
 lbl = QLabel()
 lbl.setFixedSize(500, 300)
@@ -134,11 +173,13 @@ lbl.setStyleSheet("""
         text-align:center;
         padding:0px;
 """)
-btn_category = QPushButton("SHOW WALL CATEGORY")
+btn_category = QLabel("Image By PIXABAY....")
+btn_category.setAlignment(Qt.AlignLeft)
 home_layout.addWidget(lbl_api)
 home_layout.addWidget(input_box)
 home_layout.addWidget(submit_btn)
 home_layout.addWidget(loader)
+home_layout.addWidget(label_A)
 home_layout.addWidget(lbl_err)
 home_layout.addWidget(lbl)
 home_layout.addWidget(btn_category)
@@ -150,6 +191,7 @@ def  api_check():
         submit_btn.show()
         input_box.show()
         lbl_api.show()
+        label_A.show()
         lbl.hide()
         btn_category.hide()
 
@@ -192,15 +234,15 @@ reset_btn.clicked.connect(api_none)
 
 # CHANGE WALL PAGE
 
-change_page = QWidget()
-change_layout = QVBoxLayout(change_page)
+# change_page = QWidget()
+# change_layout = QVBoxLayout(change_page)
 
-lbl_change = QLabel("CHANGE WALL PAGE")
-lbl_change.setAlignment(Qt.AlignCenter)
-lbl_change.setStyleSheet("font-size:20px;")
+# lbl_change = QLabel("CHANGE WALL PAGE")
+# lbl_change.setAlignment(Qt.AlignCenter)
+# lbl_change.setStyleSheet("font-size:20px;")
 
-change_layout.addWidget(lbl_change)
-change_layout.addStretch()
+# change_layout.addWidget(lbl_change)
+# change_layout.addStretch()
 
 
 
@@ -210,7 +252,7 @@ change_layout.addStretch()
 
 stack.addWidget(home_page)      # index 0
 stack.addWidget(settings_page)  # index 1
-stack.addWidget(change_page)    # index 2
+# stack.addWidget(change_page)    # index 2
 
 content_layout.addWidget(stack)
 
@@ -288,7 +330,7 @@ submit_btn.hide()
 lbl_err.hide()
 lbl_api.hide()
 loader.hide()
-
+label_A.hide()
 api_check()
 def api_result(success):
     loader.hide()
@@ -299,6 +341,7 @@ def api_result(success):
         input_box.hide()
         submit_btn.hide()
         lbl_api.hide()
+        label_A.hide()
         lbl.show()
         btn_category.show()
     else:
@@ -333,6 +376,16 @@ def api_submit():
 submit_btn.clicked.connect(api_submit)
 # SHOW APP
 
+
+tray = QSystemTrayIcon(QIcon(resource_path("asset/logo.ico")), app)
+
+tray_menu = QMenu()
+tray_menu.addAction("Open", window.show)
+tray_menu.addAction("Exit", app.quit)
+
+tray.setContextMenu(tray_menu)
+tray.show()
+
 window.show()
 app.exec()
 
@@ -341,10 +394,10 @@ app.exec()
 # final software pacakge with path management ans one temp image for errors control
 
 
-# path change is done
-# now add api configuration in setting
-# add animation while clicking to change btn
-# one wallpaer for fallback controll
+# path change is done [done]
+# now add api configuration in setting [done]
+# add animation while clicking to change btn [done]
+# one wallpaer for fallback controll [done]
 # website link or tutorial for how to get pixabay api_key
-# no-internet handling also not completed
+# no-internet handling also not completed [done]
 # setup for startup app
