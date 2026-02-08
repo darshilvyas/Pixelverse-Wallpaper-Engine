@@ -10,6 +10,8 @@ import category as cat
 import time
 import os
 import storage as sg
+from pyqttoast import Toast, ToastPreset
+from PySide6.QtNetwork import QNetworkInformation
 
 # Qt threds for api key validation
 class ApiWorker(QObject):
@@ -53,6 +55,19 @@ app.setWindowIcon(QIcon(resource_path("asset/logo.ico")))
 settings = QSettings("DarshilVyas", "Pixelverse Wallpaper")   
 last_cat = settings.value("last_cat","landscape",type=str)
 api_key = settings.value("api",None,type=str)
+
+# Check internet func
+
+def is_internet_available():
+    #Initialize the network backend
+    QNetworkInformation.loadDefaultBackend()
+    
+    # get the singleton instance
+    info = QNetworkInformation.instance()
+    
+    # Check if the reachability is online
+    return info.reachability() == QNetworkInformation.Reachability.Online
+
 
 
 
@@ -174,9 +189,9 @@ def api_none():
     lbl_reset.show()
     api_check()
 reset_btn.clicked.connect(api_none)
-# =====================
+
 # CHANGE WALL PAGE
-# =====================
+
 change_page = QWidget()
 change_layout = QVBoxLayout(change_page)
 
@@ -190,27 +205,34 @@ change_layout.addStretch()
 
 
 
-# =====================
+
 # ADD PAGES TO STACK
-# =====================
+
 stack.addWidget(home_page)      # index 0
 stack.addWidget(settings_page)  # index 1
 stack.addWidget(change_page)    # index 2
 
 content_layout.addWidget(stack)
 
-# =====================
+
 # ADD TO GRID
-# =====================
+
 main_grid.addWidget(sidebar, 0, 0)
 main_grid.addWidget(content, 0, 1)
 
-# =====================
+
 # BUTTON ACTIONS
-# =====================
+
 btn_home.clicked.connect(lambda: stack.setCurrentIndex(0))
 btn_setting.clicked.connect(lambda: stack.setCurrentIndex(1))
 def change_and_refresh():
+    if is_internet_available():
+        toast = Toast()
+        toast.setDuration(5000)  # 5 seconds
+        toast.setTitle("Changing Wallpaper")
+        toast.setText("We Are Changing Your Wallpaper 😊.")
+        toast.applyPreset(ToastPreset.SUCCESS)
+        toast.show()
     # FETCH CATEGORY AND ADD IT TO SETTING VARIABLE AND ALSO SEND AS SEARCH PARAMETER
     cate = cat.get_category()
     if(cate == last_cat):
@@ -218,7 +240,16 @@ def change_and_refresh():
         # ALTERNATIVE SOLUTION IS LOOP ,UNTILL I GOT UNIQE ONE BUT IT NOT EFFICIENT WAY IT LEAD CRASHES
         cate = cat.get_category()
     settings.setValue("last_cat",cate)
-    wl.main(cate)
+    if is_internet_available():
+         wl.main(cate)
+    else:
+          toast = Toast()
+    toast.setDuration(5000)  # 5 seconds
+    toast.setTitle("No Internet Connection...")
+    toast.setText("Please Turn On Internet For Changing Wallpaper 🫠")
+    toast.applyPreset(ToastPreset.ERROR_DARK)
+    toast.show()
+
     QTimer.singleShot(200, lambda: update_image(f"{path_wal}/temp.jpg"))
 
 btn_change.clicked.connect(change_and_refresh)
