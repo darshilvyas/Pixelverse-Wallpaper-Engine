@@ -3,8 +3,10 @@ import csv
 import time
 import pandas as pd
 import random as rd
+import storage as sg
 
-pathx = r"D:\MY_PYTHON\PROJECTS\Genral\cat.csv"
+# now profile.csv file directly created on main application folder
+pathx = f"{sg.get_loc()}/DarshilSoft/Pixelverse/profile.csv"
 
 query = [
     "landscape",
@@ -72,6 +74,7 @@ def get_category():
         df.loc[df['type'] == cat_type,'score'] = final_cat.iloc[0]['score'] + 5
         df.to_csv(pathx)
         return str(cat_type)
+get_category()
 
 # actual resone behind not use top 3 and 2 from random it do unfair with random values and also with top 4 and 5 who deserve chance
 # curruntly i not added minus 3 if category was skipped becuse i need to change in main file

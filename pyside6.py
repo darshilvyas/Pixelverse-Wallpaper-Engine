@@ -283,7 +283,7 @@ def change_and_refresh():
         cate = cat.get_category()
     settings.setValue("last_cat",cate)
     if is_internet_available():
-         wl.main(cate)
+         wl.main(cate,api_key)
     else:
           toast = Toast()
     toast.setDuration(5000)  # 5 seconds
@@ -398,6 +398,7 @@ app.exec()
 # now add api configuration in setting [done]
 # add animation while clicking to change btn [done]
 # one wallpaer for fallback controll [done]
-# website link or tutorial for how to get pixabay api_key
+# website link or tutorial for how to get pixabay api_key [done]
 # no-internet handling also not completed [done]
+# adding network handling while api check 
 # setup for startup app

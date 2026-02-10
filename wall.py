@@ -7,7 +7,7 @@ import os
 import storage as sg
 path_wall= f"{sg.get_loc()}/DarshilSoft/Pixelverse"
 
-api_key="54038432-adb845ea58f1b2ea0e757ddd3"
+# api_key="api_key"
 # wallpaper query topics
 # query = [
 #     "landscape",
@@ -46,11 +46,13 @@ api_key="54038432-adb845ea58f1b2ea0e757ddd3"
 # ]
 
 
-def get_req(search_query):
-    global api_key
+def get_req(search_query,api_key):
+
+         
     try:
         print(search_query,"i am here")
         call_url= f"https://pixabay.com/api/?key={api_key}&q={search_query}&image_type=photo&orientation=horizontal&min_width=2560&min_height=1440&editors_choice=false&per_page=200&pretty=true"
+        # print(get_random(get_urls(re.get(call_url).json()["hits"])))
         return get_random(get_urls(re.get(call_url).json()["hits"]))
     except:
         # default wall in error situation
@@ -81,8 +83,8 @@ def set_desktop_wallpaper(path):
 # url=get_req()
 # ul.urlretrieve(url,"1.jpg",headers=header)
 #this function work final task
-def set_up_wall (search_query):
-    url = get_req(search_query)
+def set_up_wall (search_query,api_key):
+    url = get_req(search_query,api_key)
 
     # for user-agent to Solve 403 errors forbidden
     headers = {
@@ -101,8 +103,8 @@ def set_up_wall (search_query):
 
     # set_desktop_wallpaper("1.jpeg")
 
-def main(search_query):
-    set_up_wall(search_query)
+def main(search_query,api_key):
+    set_up_wall(search_query,api_key)
     return True
 
 
@@ -118,8 +120,7 @@ def check_api(api_key):
             return True
 
 if __name__ == "__main__":
-    main("cars")
-    print(f"{path_wall}/temp1.jpg")
+    pass
 # set_desktop_wallpaper(r"C:\Users\darsh\Downloads\Soft Colorful Aesthetic Beach and Quote Desktop Wallpaper.png")
 
 # next step is setup wallpaper final and also bg activ and also startup run and optimization 
