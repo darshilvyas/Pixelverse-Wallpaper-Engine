@@ -1,3 +1,20 @@
+"""
+© 2026 Darshil Vyas
+All Rights Reserved.
+
+This source code is part of a personal portfolio project.
+It may not be copied, distributed, or used commercially
+without explicit permission from the author.
+
+For any queries regarding this project, feel free to contact me:
+Email: darshilvyas7@gmail.com
+LinkedIn: https://www.linkedin.com/in/darshil-vyas
+
+
+"""
+
+
+
 import ctypes
 import requests as re
 import random as rn
@@ -101,7 +118,7 @@ def set_up_wall (search_query,api_key):
         f.write(data)
     os.replace(f"{path_wall}/temp1.jpg", f"{path_wall}/temp.jpg")
 
-    # set_desktop_wallpaper("1.jpeg")
+    set_desktop_wallpaper(f"{path_wall}/temp1.jpg") # the final wallpaper setup ......
 
 def main(search_query,api_key):
     set_up_wall(search_query,api_key)

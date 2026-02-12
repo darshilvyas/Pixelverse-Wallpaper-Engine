@@ -1,3 +1,18 @@
+"""
+© 2026 Darshil Vyas
+All Rights Reserved.
+
+This source code is part of a personal portfolio project.
+It may not be copied, distributed, or used commercially
+without explicit permission from the author.
+
+For any queries regarding this project, feel free to contact me:
+Email: darshilvyas7@gmail.com
+LinkedIn: https://www.linkedin.com/in/darshil-vyas
+
+
+"""
+
 import os
 import csv
 import time

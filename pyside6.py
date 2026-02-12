@@ -1,6 +1,21 @@
+"""
+© 2026 Darshil Vyas
+All Rights Reserved.
+
+This source code is part of a personal portfolio project.
+It may not be copied, distributed, or used commercially
+without explicit permission from the author.
+
+For any queries regarding this project, feel free to contact me:
+Email: darshilvyas7@gmail.com
+LinkedIn: https://www.linkedin.com/in/darshil-vyas
+
+
+"""
+
 from PySide6.QtWidgets import (
     QApplication, QWidget, QPushButton, QLabel,
-    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu
+    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu, QMessageBox
 )
 from PySide6.QtCore import Qt , QTimer, QSettings ,QObject, Signal, QThread 
 from PySide6.QtGui import QPixmap , QIcon
@@ -10,6 +25,7 @@ import category as cat
 import os
 import winreg
 import storage as sg
+from pathlib import Path
 from pyqttoast import Toast, ToastPreset
 from PySide6.QtNetwork import QNetworkInformation
 
@@ -24,16 +40,73 @@ def is_first_run():
 
 
 def add_to_startup():
-    exe_path = sys.executable  # 
+    """Register the EXE/Script to run at Windows startup"""
+    # Get the correct path - either compiled EXE or script location
+    if getattr(sys, 'frozen', False):
+        # Running as compiled EXE from PyInstaller
+        exe_path = sys.executable
+    else:
+        # Running as script - get the script path
+        exe_path = os.path.abspath(__file__)
 
-    key = winreg.OpenKey(
-        winreg.HKEY_CURRENT_USER,
-        r"Software\Microsoft\Windows\CurrentVersion\Run",
-        0,
-        winreg.KEY_SET_VALUE
-    )
-    winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, exe_path)
-    winreg.CloseKey(key)
+    try:
+        # Use REG_EXPAND_SZ for proper handling
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Run",
+            0,
+            winreg.KEY_SET_VALUE
+        )
+        # Wrap path in quotes if it contains spaces
+        if ' ' in exe_path:
+            exe_path = f'"{exe_path}"'
+        
+        winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, exe_path)
+        winreg.CloseKey(key)
+        print(f"Added to startup: {exe_path}")
+        return True
+    except Exception as e:
+        print(f"Could not register startup: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def create_desktop_shortcut():
+    """Create a .lnk shortcut on the desktop"""
+    try:
+        try:
+            from win32com.client import Dispatch
+        except ImportError:
+            print("win32com not found. Installing pywin32...")
+            import subprocess
+            subprocess.run([sys.executable, "-m", "pip", "install", "pywin32"], check=True)
+            from win32com.client import Dispatch
+        
+        # Get the correct path
+        if getattr(sys, 'frozen', False):
+            exe_path = sys.executable
+        else:
+            exe_path = os.path.abspath(__file__)
+        
+        desktop = Path.home() / "Desktop"
+        shortcut_path = desktop / f"{APP_NAME}.lnk"
+        
+        shell = Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(str(shortcut_path))
+        
+        shortcut.Targetpath = exe_path
+        shortcut.WorkingDirectory = os.path.dirname(exe_path)
+        shortcut.IconLocation = exe_path
+        shortcut.save()
+        
+        print(f"Created desktop shortcut: {shortcut_path}")
+        return True
+    except Exception as e:
+        print(f"Could not create shortcut: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 def mark_first_run_done():
@@ -42,10 +115,34 @@ def mark_first_run_done():
         f.write("done")
 
 
-
-if is_first_run():
-    add_to_startup()
-    mark_first_run_done()
+def perform_first_run_setup(window):
+    """Perform first-run setup - call this after app window is created"""
+    if is_first_run():
+        print("🔧 First run detected - setting up...")
+        success = True
+        
+        if not add_to_startup():
+            success = False
+        
+        if not create_desktop_shortcut():
+            success = False
+        
+        mark_first_run_done()
+        
+        if success:
+            print("Setup complete!")
+            # Show messagebox so user knows it worked
+            QMessageBox.information(window, "Welcome!", 
+                "PixelverseWallpaper has been set up!\n\n"
+                "✅ Added to Windows Startup\n"
+                "✅ Desktop shortcut(.ink) created\n\n"
+                "⚠️ If you have any antivirus software it try to block register app as startup in that case please manually enable it.\n\n"
+                "You can close this window, it will run automatically next time you restart Windows.")
+        else:
+            print("⚠️ Setup partially failed - check errors above")
+            QMessageBox.warning(window, "Setup Warning", 
+                "Some setup features may have failed.\n"
+                "Check the console output for details.")
 
 
 # Qt threds for api key validation
@@ -62,8 +159,23 @@ class ApiWorker(QObject):
 
 # intialize the Main Component
 app = QApplication(sys.argv)
-# Create a Main BG Container
-window = QWidget()
+
+# Custom window class to handle minimize to tray
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.tray = None  # Will be set later
+    
+    def closeEvent(self, event):
+        """Override close event to minimize to tray instead of closing"""
+        if self.tray and self.tray.isVisible():
+            self.hide()
+            event.ignore()  # Don't close the app, just hide the window
+        else:
+            event.accept()  # Close the app if tray is not available
+
+# Create a Main BG Container using custom window class
+window = MainWindow()
 window.setWindowTitle("Pixelverse 8k Wallpaper")
 app.setOrganizationName("DarshilSoft")
 app.setApplicationName("Pixelverse")
@@ -74,9 +186,11 @@ path_wal=sg.get_loc()
 
 # logo loading
 def resource_path(relative_path):
-    if hasattr(sys, "_MEIPASS"):
+    if getattr(sys, '_MEIPASS', False):
+        # Running as compiled EXE from PyInstaller
         base_path = sys._MEIPASS
     else:
+        # Running as script
         base_path = os.path.dirname(os.path.abspath(__file__))
 
     return os.path.join(base_path, relative_path)
@@ -353,31 +467,40 @@ def api_submit():
     api_key_value = input_box.text().strip()
     if not api_key_value:
         return
+    if is_internet_available():
+       
+        loader.show()
+        submit_btn.hide()
+        lbl_err.hide()
 
-    loader.show()
-    submit_btn.hide()
-    lbl_err.hide()
+    # create qt thread for handle api request without ui stuck
+        global thread, worker
+        thread = QThread()
+        worker = ApiWorker(api_key_value)
 
-# create qt thread for handle api request without ui stuck
-    global thread, worker
-    thread = QThread()
-    worker = ApiWorker(api_key_value)
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run) # start request api
+        worker.finished.connect(api_result) # call api result 
+        worker.finished.connect(thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
 
-    worker.moveToThread(thread)
-    thread.started.connect(worker.run) # start request api
-    worker.finished.connect(api_result) # call api result 
-    worker.finished.connect(thread.quit)
-    worker.finished.connect(worker.deleteLater)
-    thread.finished.connect(thread.deleteLater)
+        thread.start()
 
-    thread.start()
+    else:
+            toast = Toast()
+            toast.setDuration(5000)  # 5 seconds
+            toast.setTitle("No Internet Connection...")
+            toast.setText("Please Turn On Internet For Api Connfiguration 🫠")
+            toast.applyPreset(ToastPreset.ERROR_DARK)
+            toast.show()
 
 # test api KEY
 submit_btn.clicked.connect(api_submit)
-# SHOW APP
-
+# SHOW APP - TRAY ICON
 
 tray = QSystemTrayIcon(QIcon(resource_path("asset/logo.ico")), app)
+window.tray = tray  # Store reference in window
 
 tray_menu = QMenu()
 tray_menu.addAction("Open", window.show)
@@ -385,6 +508,9 @@ tray_menu.addAction("Exit", app.quit)
 
 tray.setContextMenu(tray_menu)
 tray.show()
+
+# PERFORM FIRST RUN SETUP
+perform_first_run_setup(window)
 
 window.show()
 app.exec()
