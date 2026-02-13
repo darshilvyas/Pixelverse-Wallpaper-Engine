@@ -15,7 +15,7 @@ LinkedIn: https://www.linkedin.com/in/darshil-vyas
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QPushButton, QLabel,
-    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu, QMessageBox , QComboBox
+    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu, QMessageBox , QComboBox ,QFrame
 )
 from PySide6.QtCore import Qt , QTimer, QSettings ,QObject, Signal, QThread 
 from PySide6.QtGui import QPixmap , QIcon
@@ -243,7 +243,9 @@ sidebar.setFixedWidth(180)
 
 # Create A Vertical STACK OF sidebar Options
 sidebar_layout = QVBoxLayout(sidebar)
-
+sidebar.setStyleSheet("""
+    border-right: 1px solid #2a2d33;
+""")
 btn_home = QPushButton("Home")
 btn_setting = QPushButton("Settings")
 btn_change = QPushButton("Change-Wallpaper")
@@ -301,7 +303,24 @@ lbl.setStyleSheet("""
         text-align:center;
         padding:0px;
 """)
-btn_category = QLabel("Image By PIXABAY....")
+btn_category = QLabel("Image by <b>Pixabay</b>🦋")
+btn_category.setAlignment(Qt.AlignLeft)
+btn_category.setStyleSheet("""
+    color: #9aa0a6;
+    font-size: 19px;
+""")
+
+auth = QLabel("Created by Darshil Vyas • Built with ❤️")
+auth.setAlignment(Qt.AlignRight)
+
+auth.setStyleSheet("""
+    color: #8b8f98;
+    font-size: 16px;
+    padding: 8px;
+    border-top: 1px solid #2a2d33;
+""")
+
+
 btn_category.setAlignment(Qt.AlignLeft)
 home_layout.addWidget(lbl_api)
 home_layout.addWidget(input_box)
@@ -311,7 +330,10 @@ home_layout.addWidget(label_A)
 home_layout.addWidget(lbl_err)
 home_layout.addWidget(lbl)
 home_layout.addWidget(btn_category)
+
 home_layout.addStretch()
+home_layout.addWidget(auth)
+
 
 # CHECK API BEFORE SETTING PAGE INITIALIZATION FOR RESET BUTTON
 def  api_check():
@@ -335,9 +357,23 @@ QTimer.singleShot(100, lambda: update_image(f"{path_wal}/temp.jpg"))
 settings_page = QWidget()
 settings_layout = QVBoxLayout(settings_page)
 
-lbl_settings = QLabel("🛑Settings")
+lbl_settings = QLabel("settings")
 lbl_settings.setAlignment(Qt.AlignCenter)
-lbl_settings.setStyleSheet("font-size:20px;")
+
+lbl_settings.setStyleSheet("""
+    color: #8b8f98;
+    font-size: 20px;
+    font-weight:600px;
+    padding: 8px;
+    border-bottom: 1px solid #2a2d33;
+""")
+
+# horizontal line . 
+line = QFrame()
+line.setFrameShape(QFrame.HLine)
+line.setStyleSheet("color:#2a2d33;")
+line.setFixedHeight(1)
+
 
 lbl_set_api = QLabel("Click RESET Remove Api KEY")
 lbl_set_api.setStyleSheet("font-size:15px;")
@@ -352,6 +388,7 @@ combo_time.addItems(list(time.keys()))
 combo_time.setCurrentText(time_ms)
 combo_btn = QPushButton("Change Interval")
 settings_layout.addWidget(lbl_settings)
+settings_layout.addWidget(line)
 settings_layout.addWidget(lbl_set_api)
 settings_layout.addWidget(reset_btn)
 settings_layout.addWidget(lbl_reset)
