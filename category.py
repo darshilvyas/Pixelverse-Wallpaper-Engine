@@ -20,6 +20,12 @@ import pandas as pd
 import random as rd
 import storage as sg
 
+
+# first check for path
+path_wall= f"{sg.get_loc()}/DarshilSoft/Pixelverse"
+sg.create_path(path_wall)
+
+
 # now profile.csv file directly created on main application folder
 pathx = f"{sg.get_loc()}/DarshilSoft/Pixelverse/profile.csv"
 
@@ -91,7 +97,8 @@ def get_category():
         return str(cat_type)
 get_category()
 
-# actual resone behind not use top 3 and 2 from random it do unfair with random values and also with top 4 and 5 who deserve chance
-# curruntly i not added minus 3 if category was skipped becuse i need to change in main file
+# actual reason behind not using top 3 and 2 from random - it does unfair comparison with random values and also with top 4 and 5 who deserve a chance
+# currently i not added any minus -3 if category was skipped because i need to change it in main file
 
-# i tink repetation protection not needed becuse in pixabay api there was millions of wallpaper collection on a spacific serch keyword note here what i mention category it is actual search keywords
+# i think wallpaper search keyword repetition protection is not needed because in pixabay api there are millions of wallpaper collections on a specific search keyword .
+# note  category it is actual search keywords

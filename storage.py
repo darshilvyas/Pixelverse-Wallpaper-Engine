@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import QStandardPaths
 import os
-import sys
+
 
 
 def get_loc():
@@ -17,3 +17,8 @@ def get_loc():
     os.makedirs(app_data_dir, exist_ok=True)
 
     return app_data_dir
+
+# create App folder if not exist
+def create_path(path_str):
+    if not os.path.exists(path_str):
+        os.makedirs(path_str, exist_ok=True)

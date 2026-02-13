@@ -15,7 +15,7 @@ LinkedIn: https://www.linkedin.com/in/darshil-vyas
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QPushButton, QLabel,
-    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu, QMessageBox
+    QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu, QMessageBox , QComboBox
 )
 from PySide6.QtCore import Qt , QTimer, QSettings ,QObject, Signal, QThread 
 from PySide6.QtGui import QPixmap , QIcon
@@ -35,9 +35,21 @@ APP_NAME = "PixelverseWallpaper"
 
 FLAG_FILE = os.path.join(os.getenv("APPDATA"), APP_NAME, "first_run.txt")
 
+# for settings cobo box
+time = {
+    "15 Minutes": 900_000,
+    "10 Minutes": 600_000,
+    "5 Minutes": 300_000,
+    "2 Minutes": 120_000,
+    "1 Minute": 60_000
+}
+
 def is_first_run():
     return not os.path.exists(FLAG_FILE)
 
+# first check for path
+path_wall= f"{sg.get_loc()}/DarshilSoft/Pixelverse"
+sg.create_path(path_wall)
 
 def add_to_startup():
     """Register the EXE/Script to run at Windows startup"""
@@ -134,12 +146,12 @@ def perform_first_run_setup(window):
             # Show messagebox so user knows it worked
             QMessageBox.information(window, "Welcome!", 
                 "PixelverseWallpaper has been set up!\n\n"
-                "✅ Added to Windows Startup\n"
-                "✅ Desktop shortcut(.ink) created\n\n"
-                "⚠️ If you have any antivirus software it try to block register app as startup in that case please manually enable it.\n\n"
+                "Added to Windows Startup\n"
+                "Desktop shortcut(.ink) created\n\n"
+                "If you have any antivirus software it try to block register app as startup in that case please manually enable it.\n\n"
                 "You can close this window, it will run automatically next time you restart Windows.")
         else:
-            print("⚠️ Setup partially failed - check errors above")
+            print("⚠️ Setup partially failed -check errors above..")
             QMessageBox.warning(window, "Setup Warning", 
                 "Some setup features may have failed.\n"
                 "Check the console output for details.")
@@ -204,6 +216,7 @@ app.setWindowIcon(QIcon(resource_path("asset/logo.ico")))
 settings = QSettings("DarshilVyas", "Pixelverse Wallpaper")   
 last_cat = settings.value("last_cat","landscape",type=str)
 api_key = settings.value("api",None,type=str)
+time_ms =settings.value("time","15 Minutes",type=str)
 
 # Check internet func
 
@@ -234,6 +247,7 @@ sidebar_layout = QVBoxLayout(sidebar)
 btn_home = QPushButton("Home")
 btn_setting = QPushButton("Settings")
 btn_change = QPushButton("Change-Wallpaper")
+btn_change.setStyleSheet("background-color:#9fc879; color:#3a3937;   font-weight: 700;")
 btn_change.setCursor(Qt.PointingHandCursor)
 
 sidebar_layout.addWidget(btn_home)
@@ -331,13 +345,36 @@ reset_btn = QPushButton("RESET")
 lbl_reset = QLabel("NOW! You Can Change Your API_KEY BY Going To THE Home Page.")
 lbl_reset.setStyleSheet("color:#c7ddd1; background-color:#1c3327; padding:10px;")
 
+combo_text = QLabel("Change time Interval:")
+combo_text.setStyleSheet("font-size:15px;")
+combo_time = QComboBox()
+combo_time.addItems(list(time.keys()))
+combo_time.setCurrentText(time_ms)
+combo_btn = QPushButton("Change Interval")
 settings_layout.addWidget(lbl_settings)
 settings_layout.addWidget(lbl_set_api)
 settings_layout.addWidget(reset_btn)
 settings_layout.addWidget(lbl_reset)
+settings_layout.addWidget(combo_text)
+settings_layout.addWidget(combo_time)
+settings_layout.addWidget(combo_btn)
 lbl_reset.hide()
+combo_btn.hide()
 settings_layout.addStretch()
 
+
+
+def cobo_value_change():
+    combo_btn.show()
+
+# for changing time interval
+def change_time():
+    QMessageBox.information(window,"Interval Changed!",f"Wallpaper Interval time Changed!\n FROM {time_ms} to {combo_time.currentText()} \n \n NOTE: Changes Take Place After Restart...")
+    settings.setValue("time",combo_time.currentText())
+    combo_btn.hide()
+
+combo_time.currentTextChanged.connect(cobo_value_change)
+combo_btn.clicked.connect(change_time)
 
 #  API NONE FUNCTION
 def api_none():
@@ -433,9 +470,10 @@ def update_image(path):
     lbl.setPixmap(pixmap)
 
 
+
 wall_timer = QTimer()
 wall_timer.timeout.connect(change_and_refresh)
-wall_timer.start(900_000)  # 15 minutes 900 * 1000 = 900000 ms
+wall_timer.start(time[time_ms])  # 15 minutes 900 * 1000 = 900000 ms
 
 
 #API KEY-INPUT BOX                     
@@ -526,5 +564,9 @@ app.exec()
 # one wallpaer for fallback controll [done]
 # website link or tutorial for how to get pixabay api_key [done]
 # no-internet handling also not completed [done]
-# adding network handling while api check 
-# setup for startup app
+# adding network handling while api check [done]
+# setup for startup app [done]
+# add wallpaper changing time control [done]
+# add csv reset button
+# add about information
+# improve user interaction 

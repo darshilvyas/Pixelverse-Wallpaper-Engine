@@ -117,8 +117,8 @@ def set_up_wall (search_query,api_key):
     with open(f"{path_wall}/temp1.jpg", "wb") as f:
         f.write(data)
     os.replace(f"{path_wall}/temp1.jpg", f"{path_wall}/temp.jpg")
-
-    set_desktop_wallpaper(f"{path_wall}/temp1.jpg") # the final wallpaper setup ......
+    print(f"{path_wall}/temp.jpg")
+    set_desktop_wallpaper(f"{path_wall}/temp.jpg") # the final wallpaper setup ......
 
 def main(search_query,api_key):
     set_up_wall(search_query,api_key)
@@ -139,5 +139,4 @@ def check_api(api_key):
 if __name__ == "__main__":
     pass
 # set_desktop_wallpaper(r"C:\Users\darsh\Downloads\Soft Colorful Aesthetic Beach and Quote Desktop Wallpaper.png")
-
-# next step is setup wallpaper final and also bg activ and also startup run and optimization 
+# next step is setup wallpaper final and also bg active and also startup run and optimization
