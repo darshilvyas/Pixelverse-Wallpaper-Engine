@@ -68,7 +68,7 @@ def get_req(search_query,api_key):
          
     try:
         print(search_query,"i am here")
-        call_url= f"https://pixabay.com/api/?key={api_key}&q={search_query}&image_type=photo&orientation=horizontal&min_width=2560&min_height=1440&editors_choice=false&per_page=200&pretty=true"
+        call_url= f"https://pixabay.com/api/?key={api_key}&q={search_query}&image_type=photo&orientation=horizontal&min_width=2560&min_height=1440&editors_choice=true&per_page=200&pretty=true"
         # print(get_random(get_urls(re.get(call_url).json()["hits"])))
         return get_random(get_urls(re.get(call_url).json()["hits"]))
     except:

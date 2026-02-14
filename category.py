@@ -57,7 +57,9 @@ query = [
     "cyberpunk city",
     "futuristic city",
     "minimal landscape",
-    "abstract dark background",
+    "mac wallpaper",
+    "sky",
+    "windows wallpaper"
     "amoled dark wallpaper",
     "foggy forest",
     "misty mountains",

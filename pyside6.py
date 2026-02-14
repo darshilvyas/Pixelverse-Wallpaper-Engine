@@ -215,7 +215,7 @@ app.setWindowIcon(QIcon(resource_path("asset/logo.ico")))
 # LOAD SETTINGS VARIABLES
 settings = QSettings("DarshilVyas", "Pixelverse Wallpaper")   
 last_cat = settings.value("last_cat","landscape",type=str)
-api_key = settings.value("api",None,type=str)
+api_key = settings.value("api","NO",type=str)
 time_ms =settings.value("time","15 Minutes",type=str)
 
 # Check internet func
@@ -274,7 +274,7 @@ home_layout = QVBoxLayout(home_page)
 
 lbl_api = QLabel("*Please Enter Your PIXABAY API key for Further Process")
 lbl_api.setAlignment(Qt.AlignLeft)
-lbl_api.setStyleSheet("font-size:15px; color:red;")
+lbl_api.setStyleSheet("font-size:15px; color:#bc1922; background-color:#f8a8c6; border: 1px dotted #f8a8c6; border-radius:05px; font-weight:700")
 
 
 lbl_err = QLabel("API KEY IS WRONG PLEASE TRY AGIAN...")
@@ -283,11 +283,17 @@ lbl_err.setStyleSheet("font-size:15px; color:red;")
 
 
 input_box = QLineEdit()
+input_box.setEchoMode(QLineEdit.Password)
 input_box.setPlaceholderText("Enter Your Api KEY....")
 submit_btn = QPushButton("Submit")
 loader = QProgressBar()
 loader.setRange(0, 0)     # make it infinite
 loader.setAlignment(Qt.AlignCenter)
+
+
+chn_txt = QLabel("Changing Your Wallpaper...")
+
+chn_txt.setStyleSheet("background-color:#9fc879; color:#3a3937;   font-weight: 700; padding:5px;")
 
 
 label_A = QLabel('<a href="https://example.com">HOW TO GET PIXABAY API ? CLICK HERE...</a>')
@@ -329,15 +335,17 @@ home_layout.addWidget(loader)
 home_layout.addWidget(label_A)
 home_layout.addWidget(lbl_err)
 home_layout.addWidget(lbl)
+home_layout.addWidget(chn_txt)
 home_layout.addWidget(btn_category)
 
 home_layout.addStretch()
 home_layout.addWidget(auth)
 
-
+chn_txt.hide()
 # CHECK API BEFORE SETTING PAGE INITIALIZATION FOR RESET BUTTON
 def  api_check():
-    if not api_key:
+    global api_key
+    if api_key == "NO":
         submit_btn.show()
         input_box.show()
         lbl_api.show()
@@ -415,10 +423,15 @@ combo_btn.clicked.connect(change_time)
 
 #  API NONE FUNCTION
 def api_none():
-    settings.setValue("api",None)
+    global api_key
+    settings.setValue("api","NO")
+    api_key = "NO"
     lbl_reset.show()
     api_check()
 reset_btn.clicked.connect(api_none)
+
+
+api_check()
 
 # CHANGE WALL PAGE
 
@@ -456,6 +469,10 @@ main_grid.addWidget(content, 0, 1)
 btn_home.clicked.connect(lambda: stack.setCurrentIndex(0))
 btn_setting.clicked.connect(lambda: stack.setCurrentIndex(1))
 def change_and_refresh():
+    global api_key
+    if api_key=="NO":
+        QMessageBox.information(window,"API Required","Please Enter Api KEY For Changing Wallpaper...")
+        return None
     if is_internet_available():
         toast = Toast()
         toast.setDuration(5000)  # 5 seconds
@@ -523,9 +540,10 @@ label_A.hide()
 api_check()
 def api_result(success):
     loader.hide()
-
+    global api_key
     if success:
         settings.setValue("api", input_box.text().strip())
+        api_key=input_box.text().strip()
 
         input_box.hide()
         submit_btn.hide()
@@ -555,7 +573,7 @@ def api_submit():
 
         worker.moveToThread(thread)
         thread.started.connect(worker.run) # start request api
-        worker.finished.connect(api_result) # call api result 
+        worker.finished.connect(api_result, Qt.QueuedConnection) # call api result 
         worker.finished.connect(thread.quit)
         worker.finished.connect(worker.deleteLater)
         thread.finished.connect(thread.deleteLater)
@@ -605,5 +623,5 @@ app.exec()
 # setup for startup app [done]
 # add wallpaper changing time control [done]
 # add csv reset button
-# add about information
-# improve user interaction 
+# add about information[done]
+# improve user interaction [done]
