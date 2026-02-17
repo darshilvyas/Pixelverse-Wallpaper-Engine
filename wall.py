@@ -126,15 +126,31 @@ def main(search_query,api_key):
 
 
 
-        
-
 def check_api(api_key):
-    call_url= f"https://pixabay.com/api/?key={api_key}&q=cars&image_type=photo&orientation=horizontal&min_width=2560&min_height=1440&editors_choice=false&per_page=20&pretty=true"
-    res= re.get(call_url)
-    if(res.status_code == 400):
+    call_url = f"https://pixabay.com/api/?key={api_key}&q=cars&image_type=photo&pretty=true"
+    try:
+        # TIMEOUT=3 IS MANDATORY. 
+        # Without this, the thread hangs forever if internet is slow.
+        res = re.get(call_url, timeout=3)
+        
+        if res.status_code == 200:
+            # Verify response has valid data
+            try:
+                data = res.json()
+                # Check if response contains hits (results)
+                if "hits" in data:
+                    return True
+                else:
+                    return False
+            except Exception:
+                return False
+        else:
             return False
-    else:
-            return True
+            
+    except Exception:
+        # If internet fails, timeout, or invalid key format -> Return False
+        # This prevents the loading spinner from spinning forever.
+        return False
 
 if __name__ == "__main__":
     pass

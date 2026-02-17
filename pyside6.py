@@ -12,7 +12,13 @@ LinkedIn: https://www.linkedin.com/in/darshil-vyas
 
 
 """
-
+import urllib.request
+import threading
+import json
+import requests as re
+import urllib.parse
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from PySide6.QtWidgets import (
     QApplication, QWidget, QPushButton, QLabel,
     QVBoxLayout, QGridLayout, QStackedWidget,QLineEdit,QProgressBar,QSystemTrayIcon,QMenu, QMessageBox , QComboBox ,QFrame
@@ -25,6 +31,7 @@ import category as cat
 import os
 import winreg
 import storage as sg
+import traceback
 from pathlib import Path
 from pyqttoast import Toast, ToastPreset
 from PySide6.QtNetwork import QNetworkInformation
@@ -163,11 +170,19 @@ class ApiWorker(QObject):
 
     def __init__(self, api_key):
         super().__init__()
-        self.api_key = api_key
+        # Ensure api_key is a primitive string, not a Qt string or reference
+        self.api_key = str(api_key) 
 
     def run(self):
-        result = wl.check_api(self.api_key)
-        self.finished.emit(result)
+        try:
+            # Wrap in try-except to prevent thread crashes from bubbling up
+            result = wl.check_api(self.api_key)
+            self.finished.emit(result)
+        except Exception as e:
+            print(f"API Check Error: {e}")
+            self.finished.emit(False)
+
+
 
 # intialize the Main Component
 app = QApplication(sys.argv)
@@ -286,6 +301,12 @@ input_box = QLineEdit()
 input_box.setEchoMode(QLineEdit.Password)
 input_box.setPlaceholderText("Enter Your Api KEY....")
 submit_btn = QPushButton("Submit")
+
+
+# setup page 
+ld_txt = QLabel('Please wait… we’re cooking something awesome...')
+ld_txt.setStyleSheet('font-weight:700; font-size:17px;')
+ld_txt.setAlignment(Qt.AlignCenter)
 loader = QProgressBar()
 loader.setRange(0, 0)     # make it infinite
 loader.setAlignment(Qt.AlignCenter)
@@ -296,7 +317,7 @@ chn_txt = QLabel("Changing Your Wallpaper...")
 chn_txt.setStyleSheet("background-color:#9fc879; color:#3a3937;   font-weight: 700; padding:5px;")
 
 
-label_A = QLabel('<a href="https://example.com">HOW TO GET PIXABAY API ? CLICK HERE...</a>')
+label_A = QLabel('<a href="https://github.com/darshilvyas/Pixelverse-Wallpaper-Engine">HOW TO GET PIXABAY API ? CLICK HERE...</a>')
 label_A.setOpenExternalLinks(True)  # makes link clickable
 label_A.setAlignment(Qt.AlignCenter)
 label_A.setStyleSheet("color:#0000FF; font-size:15px;")
@@ -331,6 +352,7 @@ btn_category.setAlignment(Qt.AlignLeft)
 home_layout.addWidget(lbl_api)
 home_layout.addWidget(input_box)
 home_layout.addWidget(submit_btn)
+home_layout.addWidget(ld_txt)
 home_layout.addWidget(loader)
 home_layout.addWidget(label_A)
 home_layout.addWidget(lbl_err)
@@ -340,7 +362,7 @@ home_layout.addWidget(btn_category)
 
 home_layout.addStretch()
 home_layout.addWidget(auth)
-
+ld_txt.hide()
 chn_txt.hide()
 # CHECK API BEFORE SETTING PAGE INITIALIZATION FOR RESET BUTTON
 def  api_check():
@@ -357,7 +379,29 @@ def  api_check():
 QTimer.singleShot(100, lambda: update_image(f"{path_wal}/temp.jpg"))
 
 
+# show setup page
+def show_setup():
+    ld_txt.show()
+    loader.show()
+    input_box.hide()
+    submit_btn.hide()
+    lbl_api.hide()
+    label_A.hide()
+    lbl_err.hide()
+    lbl.hide()
+    btn_category.hide()
 
+# hide setup
+def hide_setup():
+    ld_txt.hide()
+    loader.hide()
+    input_box.hide()
+    submit_btn.hide()
+    lbl_api.hide()
+    label_A.hide()
+    lbl_err.hide()
+    lbl.show()
+    btn_category.show()
 
 
 # SETTINGS PAGE
@@ -527,7 +571,7 @@ def update_image(path):
 
 wall_timer = QTimer()
 wall_timer.timeout.connect(change_and_refresh)
-wall_timer.start(time[time_ms])  # 15 minutes 900 * 1000 = 900000 ms
+wall_timer.start(time[time_ms])  # 15  minutes 900 * 1000 = 900000ms
 
 
 #API KEY-INPUT BOX                     
@@ -544,13 +588,11 @@ def api_result(success):
     if success:
         settings.setValue("api", input_box.text().strip())
         api_key=input_box.text().strip()
-
-        input_box.hide()
-        submit_btn.hide()
-        lbl_api.hide()
-        label_A.hide()
-        lbl.show()
-        btn_category.show()
+        print(f"✅ API Key saved successfully!")
+        # Skip setup page and show wallpaper directly
+        hide_setup()
+        ld_txt.hide()
+        chn_txt.hide()
     else:
         lbl_err.show()
         submit_btn.show()
@@ -560,33 +602,73 @@ def api_submit():
     api_key_value = input_box.text().strip()
     if not api_key_value:
         return
+
     if is_internet_available():
-       
         loader.show()
         submit_btn.hide()
         lbl_err.hide()
-
-    # create qt thread for handle api request without ui stuck
-        global thread, worker
-        thread = QThread()
-        worker = ApiWorker(api_key_value)
-
-        worker.moveToThread(thread)
-        thread.started.connect(worker.run) # start request api
-        worker.finished.connect(api_result, Qt.QueuedConnection) # call api result 
-        worker.finished.connect(thread.quit)
-        worker.finished.connect(worker.deleteLater)
-        thread.finished.connect(thread.deleteLater)
-
-        thread.start()
+        QApplication.processEvents()
+        
+        print("Starting API validation...")
+        
+        try:
+            # Properly encode the API key and search term
+            key = str(api_key_value).strip()
+            search_query = "cars"
+            
+            # Build URL with proper encoding
+            url = f"https://pixabay.com/api/?key={key}&q={search_query}&image_type=photo&pretty=true"
+            
+            print(f"Connecting to Pixabay API...")
+            
+            # Create a session with connection pooling for faster requests
+            session = re.Session()
+            retry = Retry(connect=5, backoff_factor=0.5)
+            adapter = HTTPAdapter(max_retries=retry)
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
+            
+            # Make the request directly
+            res = session.get(url, timeout=None)
+            
+            print(f"Response status code: {res.status_code}")
+            
+            if res.status_code == 200:
+                # Check if response has valid data (not just empty 200)
+                try:
+                    data = res.json()
+                    if "hits" in data:
+                        print(f"API key Valid! Found {len(data.get('hits', []))} images")
+                        api_result(True)
+                    else:
+                        print(f"Invalid API response  - no hits field...")
+                        api_result(False)
+                except Exception as json_err:
+                    print(f"  JSON parse error: {json_err}")
+                    api_result(False)
+            else:
+                print(f"API validation failed:  status={res.status_code}")
+                try:
+                    print(f"Response: {res.text[:200]}")
+                except Exception:
+                    print("Could not read response body..")
+                api_result(False)
+        except Exception as e:
+            # Catch timeout, DNS, SSL, or other network errors
+            import sys as _sys
+            exc = _sys.exc_info()
+            print(f" API validation exception: {e}")
+            traceback.print_exception(*exc)
+            api_result(False)
 
     else:
-            toast = Toast()
-            toast.setDuration(5000)  # 5 seconds
-            toast.setTitle("No Internet Connection...")
-            toast.setText("Please Turn On Internet For Api Connfiguration 🫠")
-            toast.applyPreset(ToastPreset.ERROR_DARK)
-            toast.show()
+        toast = Toast()
+        toast.setDuration(5000)
+        toast.setTitle("No Internet Connection...")
+        toast.setText("Please Turn On Internet For Api Configuration 🫠")
+        toast.applyPreset(ToastPreset.ERROR_DARK)
+        toast.show()
+
 
 # test api KEY
 submit_btn.clicked.connect(api_submit)
@@ -608,7 +690,6 @@ perform_first_run_setup(window)
 window.show()
 app.exec()
 
-
 # now missing things are network handling and setting time management feture and api_key giveing feture and last category and 
 # final software pacakge with path management ans one temp image for errors control
 
@@ -622,6 +703,9 @@ app.exec()
 # adding network handling while api check [done]
 # setup for startup app [done]
 # add wallpaper changing time control [done]
-# add csv reset button
+# add csv reset button  [i thing it can lead errors so not adding is good thing]
 # add about information[done]
 # improve user interaction [done]
+
+
+# after api sucessfully config i thing show loading page for setup temp.jpg wallpaper  i thing call chage_refresh func untill image is not downloaded 

@@ -1,11 +1,5 @@
-from PySide6.QtWidgets import (
-    QApplication
-)
-
 from PySide6.QtCore import QStandardPaths
 import os
-
-
 
 def get_loc():
     # Get writable app data location
