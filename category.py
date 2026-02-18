@@ -59,7 +59,7 @@ query = [
     "minimal landscape",
     "mac wallpaper",
     "sky",
-    "windows wallpaper"
+    "windows wallpaper",
     "amoled dark wallpaper",
     "foggy forest",
     "misty mountains",
@@ -82,10 +82,10 @@ def get_category():
                     "score": 30
                 })
         df = pd.read_csv(pathx)
-        df.loc[df['type'] == 'landscape', 'score'] = 35
+        df.loc[df['type'] == 'landscape', 'score'] = 35 # give more score to best category for balance in starting
         df.loc[df['type'] == 'space', 'score'] = 35
         df.loc[df['type'] == 'mountain landscape', 'score'] = 35
-        df.to_csv(pathx)
+        df.to_csv(pathx,index=False)
                 
     else:
         df = pd.read_csv(pathx)
@@ -95,8 +95,9 @@ def get_category():
         cat_type = final_cat.iloc[0]['type']
         df.loc[df['type'] == cat_type,'last-modify-date'] = get_date()
         df.loc[df['type'] == cat_type,'score'] = final_cat.iloc[0]['score'] + 5
-        df.to_csv(pathx)
+        df.to_csv(pathx,index=False)
         return str(cat_type)
+    return 'landscape' # only execute if user manully remove csv while program is running
 get_category()
 
 # actual reason behind not using top 3 and 2 from random - it does unfair comparison with random values and also with top 4 and 5 who deserve a chance

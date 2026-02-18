@@ -307,9 +307,9 @@ submit_btn = QPushButton("Submit")
 ld_txt = QLabel('Please wait… we’re cooking something awesome...')
 ld_txt.setStyleSheet('font-weight:700; font-size:17px;')
 ld_txt.setAlignment(Qt.AlignCenter)
-loader = QProgressBar()
-loader.setRange(0, 0)     # make it infinite
+loader = QLabel("Please Wait..")
 loader.setAlignment(Qt.AlignCenter)
+loader.setStyleSheet('font-weight:700; font-size:17px;')
 
 
 chn_txt = QLabel("Changing Your Wallpaper...")
@@ -381,6 +381,7 @@ QTimer.singleShot(100, lambda: update_image(f"{path_wal}/temp.jpg"))
 
 # show setup page
 def show_setup():
+    # change_and_refresh()
     ld_txt.show()
     loader.show()
     input_box.hide()
@@ -518,6 +519,8 @@ def change_and_refresh():
         QMessageBox.information(window,"API Required","Please Enter Api KEY For Changing Wallpaper...")
         return None
     if is_internet_available():
+        # hide_setup()
+        # QApplication.processEvents()
         toast = Toast()
         toast.setDuration(5000)  # 5 seconds
         toast.setTitle("Changing Wallpaper")
@@ -533,6 +536,7 @@ def change_and_refresh():
     settings.setValue("last_cat",cate)
     if is_internet_available():
          wl.main(cate,api_key)
+         
     else:
           toast = Toast()
     toast.setDuration(5000)  # 5 seconds
@@ -586,11 +590,16 @@ def api_result(success):
     loader.hide()
     global api_key
     if success:
+        hide_setup()
+        QApplication.processEvents()
         settings.setValue("api", input_box.text().strip())
         api_key=input_box.text().strip()
         print(f"✅ API Key saved successfully!")
         # Skip setup page and show wallpaper directly
-        hide_setup()
+        # show_setup()
+        QApplication.processEvents()
+        
+        change_and_refresh()
         ld_txt.hide()
         chn_txt.hide()
     else:
@@ -627,9 +636,10 @@ def api_submit():
             adapter = HTTPAdapter(max_retries=retry)
             session.mount('http://', adapter)
             session.mount('https://', adapter)
-            
+            QApplication.processEvents()
             # Make the request directly
             res = session.get(url, timeout=None)
+            QApplication.processEvents()
             
             print(f"Response status code: {res.status_code}")
             
@@ -637,8 +647,10 @@ def api_submit():
                 # Check if response has valid data (not just empty 200)
                 try:
                     data = res.json()
+                    QApplication.processEvents()
                     if "hits" in data:
                         print(f"API key Valid! Found {len(data.get('hits', []))} images")
+                        # change_and_refresh()
                         api_result(True)
                     else:
                         print(f"Invalid API response  - no hits field...")
@@ -657,6 +669,7 @@ def api_submit():
             # Catch timeout, DNS, SSL, or other network errors
             import sys as _sys
             exc = _sys.exc_info()
+            QApplication.processEvents()
             print(f" API validation exception: {e}")
             traceback.print_exception(*exc)
             api_result(False)
@@ -708,4 +721,4 @@ app.exec()
 # improve user interaction [done]
 
 
-# after api sucessfully config i thing show loading page for setup temp.jpg wallpaper  i thing call chage_refresh func untill image is not downloaded 
+# after api sucessfully config i thing show loading page for setup temp.jpg wallpaper  i thing call chage_refresh func untill image is not downloaded [done]
