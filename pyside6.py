@@ -317,7 +317,7 @@ chn_txt = QLabel("Changing Your Wallpaper...")
 chn_txt.setStyleSheet("background-color:#9fc879; color:#3a3937;   font-weight: 700; padding:5px;")
 
 
-label_A = QLabel('<a href="https://github.com/darshilvyas/Pixelverse-Wallpaper-Engine">HOW TO GET PIXABAY API ? CLICK HERE...</a>')
+label_A = QLabel('<a href="https://github.com/darshilvyas/Pixelverse-Wallpaper-Engine?tab=readme-ov-file#-how-to-get-pixabay-api-key">HOW TO GET PIXABAY API ? CLICK HERE...</a>')
 label_A.setOpenExternalLinks(True)  # makes link clickable
 label_A.setAlignment(Qt.AlignCenter)
 label_A.setStyleSheet("color:#0000FF; font-size:15px;")
